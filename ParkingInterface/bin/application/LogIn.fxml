@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import com.jfoenix.controls.JFXButton?>
+<?import com.jfoenix.controls.JFXPasswordField?>
+<?import com.jfoenix.controls.JFXTextField?>
+<?import javafx.scene.Cursor?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.image.Image?>
+<?import javafx.scene.image.ImageView?>
+<?import javafx.scene.layout.AnchorPane?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.text.Font?>
+<?import javafx.scene.text.Text?>
+
+<AnchorPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="600.0" prefWidth="1000.0" style="-fx-background-color: white;" xmlns="http://javafx.com/javafx/19" xmlns:fx="http://javafx.com/fxml/1" fx:controller="application.LogIn">
+   <children>
+      <Pane prefHeight="600.0" prefWidth="500.0" style="-fx-background-color: #ef3c39;">
+         <children>
+            <ImageView fitHeight="600.0" fitWidth="500.0" opacity="0.6">
+               <image>
+                  <Image url="@../img/ccee99bba30bd25d3af74183b5b56fff.jpg" />
+               </image>
+            </ImageView>
+            <Text fill="WHITE" layoutX="25.0" layoutY="291.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Parking Lot Design&lt;/&gt;" textAlignment="CENTER">
+               <font>
+                  <Font name="Unispace-Bold" size="35.0" />
+               </font>
+            </Text>
+         </children>
+      </Pane>
+      <ImageView fitHeight="110.0" fitWidth="114.0" layoutX="704.0" layoutY="45.0">
+         <image>
+            <Image url="@../img/kisspng-computer-icons-user-symbol-light-client-icon-5b5cfd0bbe3066.907360791532820747779.jpg" />
+         </image>
+      </ImageView>
+      <JFXTextField fx:id="username" focusColor="#ef3c39" labelFloat="true" layoutX="614.0" layoutY="258.0" prefHeight="26.0" prefWidth="294.0" promptText="Username" unFocusColor="#ef3c39">
+         <font>
+            <Font size="15.0" />
+         </font>
+      </JFXTextField>
+      <JFXPasswordField fx:id="password" focusColor="#ef3c39" labelFloat="true" layoutX="614.0" layoutY="328.0" prefHeight="26.0" prefWidth="294.0" promptText="Password" unFocusColor="#ef3c39">
+         <font>
+            <Font size="15.0" />
+         </font>
+      </JFXPasswordField>
+      <Text fill="#ef9739" layoutX="685.0" layoutY="210.0" strokeType="OUTSIDE" strokeWidth="0.0" text="WELCOME">
+         <font>
+            <Font name="System Bold" size="31.0" />
+         </font>
+      </Text>
+      <JFXButton fx:id="button" buttonType="RAISED" layoutX="614.0" layoutY="426.0" onAction="#userLogIn" prefHeight="40.0" prefWidth="294.0" style="-fx-background-color: #ef3991;" stylesheets="@application.css" text="Đăng nhập" textAlignment="CENTER" textFill="WHITE">
+         <font>
+            <Font size="15.0" />
+         </font>
+         <cursor>
+            <Cursor fx:constant="HAND" />
+         </cursor>
+      </JFXButton>
+      <JFXButton fx:id="cancelButton" buttonType="RAISED" layoutX="614.0" layoutY="490.0" onAction="#cancelButtonClick" prefHeight="40.0" prefWidth="294.0" style="-fx-background-color: #ef3991;" stylesheets="@application.css" text="Hủy" textAlignment="CENTER" textFill="WHITE">
+         <font>
+            <Font size="15.0" />
+         </font>
+         <cursor>
+            <Cursor fx:constant="HAND" />
+         </cursor>
+      </JFXButton>
+      <Label fx:id="wrongLogIn" alignment="CENTER" contentDisplay="CENTER" layoutX="614.0" layoutY="386.0" prefHeight="19.0" prefWidth="294.0" textAlignment="CENTER" textFill="#ef3c39">
+         <font>
+            <Font size="13.0" />
+         </font>
+      </Label>
+   </children>
+</AnchorPane>
