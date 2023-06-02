@@ -9,6 +9,8 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.collections.transformation.FilteredList;
@@ -67,6 +69,8 @@ public class Admincontrol implements Initializable {
 	@FXML
 	private Button clearAttendantButton;
 	@FXML
+	private Button updateFeeButton;
+	@FXML
 	private TextField attendantIdInput;
 	@FXML
 	private TextField attendantFnameInput;
@@ -84,6 +88,8 @@ public class Admincontrol implements Initializable {
 	private TextField attendantSearchInput;
 	@FXML
 	private TextField spotSearchInput;
+	@FXML
+	private TextField feeInput;
 	@FXML
 	private AnchorPane homeForm;
 	@FXML
@@ -148,6 +154,10 @@ public class Admincontrol implements Initializable {
 	private Label totalMotorcycleSpot;
 	@FXML
 	private Label totalElectricSpot;
+	@FXML
+	private Label totalCashEarned;
+	@FXML
+	private Label hourlyFee;
 
 	public void switchForm(ActionEvent event) {
 
@@ -983,11 +993,123 @@ public class Admincontrol implements Initializable {
 		}
 	}
 
+	public void displayTotalCashEarned() {
+		String sql = "SELECT CASH_EARNED FROM CASHEARNED";
+
+		DatabaseConnection connectNow = new DatabaseConnection();
+		connect = connectNow.getConnection();
+
+		try {
+			prepare = connect.prepareStatement(sql);
+			result = prepare.executeQuery();
+
+			while (result.next()) {
+				totalCashEarned.setText(result.getString("CASH_EARNED") + "đ");
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void displayHourlyFee() {
+		String sql = "SELECT HOURLY_FEE FROM PARKINGFEE";
+
+		DatabaseConnection connectNow = new DatabaseConnection();
+		connect = connectNow.getConnection();
+
+		try {
+			prepare = connect.prepareStatement(sql);
+			result = prepare.executeQuery();
+
+			while (result.next()) {
+				hourlyFee.setText(result.getString("HOURLY_FEE") + "đ");
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void updateFee() {
+		
+		String sql = "UPDATE parkingfee SET HOURLY_FEE = " + feeInput.getText();
+
+		DatabaseConnection connectNow = new DatabaseConnection();
+		connect = connectNow.getConnection();
+
+		try {
+			Alert alert;
+			if (feeInput.getText().isEmpty()) {
+				alert = new Alert(AlertType.ERROR);
+				alert.setTitle("Error Message");
+				alert.setHeaderText(null);
+				alert.setContentText("Please fill the Fee input field");
+				alert.showAndWait();
+			} else if (Integer.parseInt(feeInput.getText()) <= 0) {
+
+				alert = new Alert(AlertType.ERROR);
+				alert.setTitle("Error Message");
+				alert.setHeaderText(null);
+				alert.setContentText("Fee cannot be negative or 0");
+				alert.showAndWait();
+
+			} else {
+
+				alert = new Alert(AlertType.CONFIRMATION);
+				alert.setTitle("Cofirmation Message");
+				alert.setHeaderText(null);
+				alert.setContentText("Are you sure you want to UPDATE hourly fee?");
+				Optional<ButtonType> option = alert.showAndWait();
+
+				if (option.get().equals(ButtonType.OK)) {
+					statement = connect.createStatement();
+					statement.executeUpdate(sql);
+					alert = new Alert(AlertType.INFORMATION);
+					alert.setTitle("Information Message");
+					alert.setHeaderText(null);
+					alert.setContentText("Successfully Updated!");
+					alert.showAndWait();
+
+					displayHourlyFee();
+
+				}
+
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+	
+	public void filterInt(TextField input) {
+		input.textProperty().addListener(new ChangeListener<String>() {
+		    @Override
+		    public void changed(ObservableValue<? extends String> observable, String oldValue, 
+		        String newValue) {
+		        if (!newValue.matches("\\d*")) {
+		        	input.setText(newValue.replaceAll("[^\\d]", ""));
+		        }
+		    }
+		});
+	}
+	
+
 	@Override
 	public void initialize(URL url, ResourceBundle rb) {
 		displayAdminName();
 		displayTotalAttendant();
 		displayTotalSpot();
+		displayTotalCashEarned();
+		displayHourlyFee();
+		
+		filterInt(feeInput);
+		filterInt(attendantIdInput);
+		filterInt(attendantPhoneInput);
+		filterInt(spotNumberInput);
+
+		
 		employeeShowListData();
 		spotShowListData();
 		spotTypeList();

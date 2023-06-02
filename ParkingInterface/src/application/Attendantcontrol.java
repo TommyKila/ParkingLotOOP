@@ -120,6 +120,7 @@ public class Attendantcontrol implements Initializable {
 			entranceForm.setVisible(true);
 			exitForm.setVisible(false);
 			spotEntranceSearch();
+			displaySpotCount();
 
 		} else if (event.getSource() == exitPanelButton) {
 			entranceForm.setVisible(false);
@@ -167,7 +168,7 @@ public class Attendantcontrol implements Initializable {
 
 	public void spotEntranceSearch() {
 
-		FilteredList<ParkingSpot> filter = new FilteredList<>(SpotListData(), e -> true);
+		FilteredList<ParkingSpot> filter = new FilteredList<>(FreeSpotListData(), e -> true);
 
 		spotSearchInput.textProperty().addListener((observableValue, oldValue, newValue) -> {
 
@@ -209,10 +210,10 @@ public class Attendantcontrol implements Initializable {
 		spotDataTable.setItems(sortList);
 
 	}
-	
+
 	public void spotExitSearch() {
 
-		FilteredList<ParkingSpot> filter = new FilteredList<>(SpotListData(), e -> true);
+		FilteredList<ParkingSpot> filter = new FilteredList<>(ParkedSpotListData(), e -> true);
 
 		spotSearchInput1.textProperty().addListener((observableValue, oldValue, newValue) -> {
 
@@ -255,10 +256,10 @@ public class Attendantcontrol implements Initializable {
 
 	}
 
-	public ObservableList<ParkingSpot> SpotListData() {
+	public ObservableList<ParkingSpot> ParkedSpotListData() {
 
 		ObservableList<ParkingSpot> listData = FXCollections.observableArrayList();
-		String sql = "SELECT * FROM ParkingSpot";
+		String sql = "SELECT * FROM ParkingSpot WHERE TICKET_ID IS NOT NULL";
 
 		DatabaseConnection connectNow = new DatabaseConnection();
 		connect = connectNow.getConnection();
@@ -285,8 +286,38 @@ public class Attendantcontrol implements Initializable {
 		return listData;
 	}
 
-	public void spotShowListData() {
-		spotList = SpotListData();
+	public ObservableList<ParkingSpot> FreeSpotListData() {
+
+		ObservableList<ParkingSpot> listData = FXCollections.observableArrayList();
+		String sql = "SELECT * FROM ParkingSpot WHERE TICKET_ID IS NULL";
+
+		DatabaseConnection connectNow = new DatabaseConnection();
+		connect = connectNow.getConnection();
+
+		try {
+			prepare = connect.prepareStatement(sql);
+			result = prepare.executeQuery();
+			ParkingSpot spot;
+			Vehicle vehicle;
+			ParkingTicket ticket;
+
+			while (result.next()) {
+				ticket = new ParkingTicket(result.getString("TICKET_ID"),
+						result.getObject("PARKED_AT", LocalDateTime.class));
+				vehicle = new Vehicle(result.getString("VEH_LIS_NUM"), result.getString("SPOT_TYPE"), ticket);
+				spot = new ParkingSpot(result.getString("SPOT_NUM"), vehicle, result.getString("SPOT_TYPE"),
+						result.getString("FLOOR_NUM"));
+				listData.add(spot);
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return listData;
+	}
+
+	public void spotEntranceShowListData() {
+		spotList = FreeSpotListData();
 
 		spotColNum.setCellValueFactory(new PropertyValueFactory<>("number"));
 		spotColType.setCellValueFactory(new PropertyValueFactory<>("type"));
@@ -294,6 +325,14 @@ public class Attendantcontrol implements Initializable {
 		spotColFloorNum.setCellValueFactory(new PropertyValueFactory<>("floorNum"));
 		spotColTicketId.setCellValueFactory(new PropertyValueFactory<>("ticketId"));
 		spotColParkDate.setCellValueFactory(new PropertyValueFactory<>("parkedDateString"));
+
+		spotDataTable.setItems(spotList);
+
+	}
+
+	public void spotExitShowListData() {
+		spotList = ParkedSpotListData();
+
 		spotColNum1.setCellValueFactory(new PropertyValueFactory<>("number"));
 		spotColType1.setCellValueFactory(new PropertyValueFactory<>("type"));
 		spotColVehnum1.setCellValueFactory(new PropertyValueFactory<>("licenseNumber"));
@@ -301,7 +340,6 @@ public class Attendantcontrol implements Initializable {
 		spotColTicketId1.setCellValueFactory(new PropertyValueFactory<>("ticketId"));
 		spotColParkDate1.setCellValueFactory(new PropertyValueFactory<>("parkedDateString"));
 
-		spotDataTable.setItems(spotList);
 		spotDataTable1.setItems(spotList);
 
 	}
@@ -348,6 +386,9 @@ public class Attendantcontrol implements Initializable {
 		String checkLisNum = "SELECT VEH_LIS_NUM from PARKINGSPOT WHERE VEH_LIS_NUM = '" + vehiclePlateInput.getText()
 				+ "'";
 
+		String checkEmptySpot = "select SPOT_NUM FROM PARKINGSPOT WHERE TICKET_ID IS NULL AND SPOT_TYPE = '"
+				+ vehicleTypeInput.getSelectionModel().getSelectedItem() + "'";
+
 		DatabaseConnection connectNow = new DatabaseConnection();
 		connect = connectNow.getConnection();
 
@@ -371,27 +412,42 @@ public class Attendantcontrol implements Initializable {
 					alert.setContentText("Vehicle with License Plate Number: " + vehiclePlateInput.getText()
 							+ " already exists within the Parking Lot!");
 					alert.showAndWait();
+
 				} else {
-
-					alert = new Alert(AlertType.CONFIRMATION);
-					alert.setTitle("Cofirmation Message");
-					alert.setHeaderText(null);
-					alert.setContentText("Are you sure you want to park Vehicle with Plate Number: "
-							+ vehiclePlateInput.getText() + "?");
-					Optional<ButtonType> option = alert.showAndWait();
-
-					if (option.get().equals(ButtonType.OK)) {
-						statement = connect.createStatement();
-						statement.executeUpdate(sql);
-						alert = new Alert(AlertType.INFORMATION);
-						alert.setTitle("Information Message");
+					statement = connect.createStatement();
+					result = statement.executeQuery(checkEmptySpot);
+					if (!result.next()) {
+						alert = new Alert(AlertType.ERROR);
+						alert.setTitle("Error Message");
 						alert.setHeaderText(null);
-						alert.setContentText("Successfully Parked!");
+						alert.setContentText("There are not any empty spot for vehicle type: "
+								+ vehicleTypeInput.getSelectionModel().getSelectedItem());
 						alert.showAndWait();
+					} else {
 
-						spotShowListData();
+						alert = new Alert(AlertType.CONFIRMATION);
+						alert.setTitle("Cofirmation Message");
+						alert.setHeaderText(null);
+						alert.setContentText("Are you sure you want to park Vehicle with Plate Number: "
+								+ vehiclePlateInput.getText() + "?");
+						Optional<ButtonType> option = alert.showAndWait();
+
+						if (option.get().equals(ButtonType.OK)) {
+							statement = connect.createStatement();
+							statement.executeUpdate(sql);
+							alert = new Alert(AlertType.INFORMATION);
+							alert.setTitle("Information Message");
+							alert.setHeaderText(null);
+							alert.setContentText("Successfully Parked!");
+							alert.showAndWait();
+
+							spotEntranceShowListData();
+							spotExitShowListData();
+
+							displaySpotCount();
+						}
+
 					}
-
 				}
 
 			}
@@ -467,7 +523,9 @@ public class Attendantcontrol implements Initializable {
 							alert.setContentText("Successfully Scanned!");
 							alert.showAndWait();
 
-							spotShowListData();
+							spotEntranceShowListData();
+							spotExitShowListData();
+							displaySpotCount();
 						}
 					}
 
@@ -488,6 +546,8 @@ public class Attendantcontrol implements Initializable {
 				+ "'";
 
 		String getHourlyFee = "select HOURLY_FEE from parkingfee";
+
+		String getCashEarned = "SELECT CASH_EARNED FROM CASHEARNED";
 
 		try {
 			prepare = connect.prepareStatement(getParkedAt);
@@ -511,7 +571,17 @@ public class Attendantcontrol implements Initializable {
 
 				while (result.next()) {
 					int fees = (int) Math.round(result.getInt("HOURLY_FEE") * timeParked);
-					totalFees.setText(fees + " dong");
+					totalFees.setText(fees + "đ");
+
+					prepare = connect.prepareStatement(getCashEarned);
+					result = prepare.executeQuery();
+
+					while (result.next()) {
+						String updateTotalCash = "UPDATE CASHEARNED SET CASH_EARNED = "
+								+ (result.getInt("CASH_EARNED") + fees);
+						statement = connect.createStatement();
+						statement.executeUpdate(updateTotalCash);
+					}
 				}
 
 			}
@@ -569,7 +639,8 @@ public class Attendantcontrol implements Initializable {
 
 	@Override
 	public void initialize(URL url, ResourceBundle rb) {
-		spotShowListData();
+		spotEntranceShowListData();
+		spotExitShowListData();
 		displayAttendantName();
 		displaySpotCount();
 		vehicleTypeList();
