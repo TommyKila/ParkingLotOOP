@@ -4,8 +4,11 @@ import java.net.URL;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.sql.Statement;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -21,6 +24,10 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.chart.BarChart;
+import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.XYChart;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.control.Button;
@@ -57,7 +64,11 @@ public class Admincontrol implements Initializable {
 	@FXML
 	private Button attendantButton;
 	@FXML
+	private Button spotButton;
+	@FXML
 	private Button floorButton;
+	@FXML
+	private Button chartButton;
 	@FXML
 	private Button logoutButton;
 	@FXML
@@ -96,6 +107,10 @@ public class Admincontrol implements Initializable {
 	private AnchorPane attendantForm;
 	@FXML
 	private AnchorPane floorForm;
+	@FXML
+	private AnchorPane spotForm;
+	@FXML
+	private AnchorPane chartForm;
 	@FXML
 	private TableView<Attendant> employeeDataTable;
 	@FXML
@@ -143,6 +158,8 @@ public class Admincontrol implements Initializable {
 	@FXML
 	private CheckBox showEmptySpotBox;
 	@FXML
+	private CheckBox showNumsFreeSpotBox;
+	@FXML
 	private Label adminName;
 	@FXML
 	private Label totalAttendant;
@@ -158,6 +175,83 @@ public class Admincontrol implements Initializable {
 	private Label totalCashEarned;
 	@FXML
 	private Label hourlyFee;
+	@FXML
+	private CategoryAxis X;
+	@FXML
+	private NumberAxis Y;
+	@FXML
+	private BarChart<?, ?> earnChart;
+	@FXML
+	private Label floor1CarSpot;
+	@FXML
+	private Label floor1ElectricSpot;
+	@FXML
+	private Label floor1MotorcycleSpot;
+	@FXML
+	private Label floor2CarSpot;
+	@FXML
+	private Label floor2ElectricSpot;
+	@FXML
+	private Label floor2MotorcycleSpot;
+	@FXML
+	private Label floor3CarSpot;
+	@FXML
+	private Label floor3ElectricSpot;
+	@FXML
+	private Label floor3MotorcycleSpot;
+
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public void homeChart() {
+
+		earnRefresh();
+
+		earnChart.getData().clear();
+
+		String sql = "SELECT SUM(CASH_EARNED), earned_date" + " FROM cashearned" + " GROUP BY earned_date";
+
+		DatabaseConnection connectNow = new DatabaseConnection();
+		connect = connectNow.getConnection();
+
+		try {
+			XYChart.Series chart = new XYChart.Series();
+			chart.setName("Cash earned in VND");
+
+			prepare = connect.prepareStatement(sql);
+			result = prepare.executeQuery();
+
+			while (result.next()) {
+				DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
+				chart.getData()
+						.add(new XYChart.Data(
+								"  " + result.getInt("SUM(CASH_EARNED)") + "đ\r\n"
+										+ result.getObject("earned_date", LocalDate.class).format(formatter),
+								result.getInt("SUM(CASH_EARNED)")));
+			}
+
+			earnChart.getData().add(chart);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+
+	}
+
+	public void earnRefresh() {
+
+		LocalDate weekPast = LocalDate.now().minusDays(6);
+
+		String date = weekPast.toString().replace("T", " ");
+
+		String sql = "delete from cashearned where EARNED_DATE < '" + date + "'";
+
+		try {
+			statement = connect.createStatement();
+			statement.executeUpdate(sql);
+		} catch (SQLException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public void switchForm(ActionEvent event) {
 
@@ -165,6 +259,8 @@ public class Admincontrol implements Initializable {
 			homeForm.setVisible(true);
 			attendantForm.setVisible(false);
 			floorForm.setVisible(false);
+			chartForm.setVisible(false);
+			spotForm.setVisible(false);
 			displayTotalAttendant();
 			displayTotalSpot();
 
@@ -172,16 +268,34 @@ public class Admincontrol implements Initializable {
 			homeForm.setVisible(false);
 			attendantForm.setVisible(true);
 			floorForm.setVisible(false);
+			chartForm.setVisible(false);
+			spotForm.setVisible(false);
 			employeeShowListData();
 			employeeSearch();
 
+		} else if (event.getSource() == spotButton) {
+			homeForm.setVisible(false);
+			attendantForm.setVisible(false);
+			floorForm.setVisible(false);
+			chartForm.setVisible(false);
+			spotForm.setVisible(true);
+			spotShowListData();
+			spotSearch();
+
+		} else if (event.getSource() == chartButton) {
+			homeForm.setVisible(false);
+			attendantForm.setVisible(false);
+			floorForm.setVisible(false);
+			chartForm.setVisible(true);
+			spotForm.setVisible(false);
+			homeChart();
 		} else if (event.getSource() == floorButton) {
 			homeForm.setVisible(false);
 			attendantForm.setVisible(false);
 			floorForm.setVisible(true);
-			spotShowListData();
-			spotSearch();
-
+			chartForm.setVisible(false);
+			spotForm.setVisible(false);
+			displayFloorSpots();
 		}
 
 	}
@@ -576,19 +690,16 @@ public class Admincontrol implements Initializable {
 				String searchKey = newValue.toLowerCase();
 
 				if (predicateSpotData.getNumber().toString().contains(searchKey)) {
-					System.out.println(predicateSpotData.getNumber());
 					return true;
 				} else if (predicateSpotData.getTicketId() != null
 						&& predicateSpotData.getTicketId().toLowerCase().contains(searchKey)) {
 					return true;
 				} else if (predicateSpotData.getFloorNum().toLowerCase().contains(searchKey)) {
-					System.out.println(predicateSpotData.getFloorNum());
 					return true;
 				} else if (predicateSpotData.getLicenseNumber() != null
 						&& predicateSpotData.getLicenseNumber().toLowerCase().contains(searchKey)) {
 					return true;
 				} else if (predicateSpotData.getType().toLowerCase().contains(searchKey)) {
-					System.out.println(predicateSpotData.getType());
 					return true;
 				} else if (predicateSpotData.getParkedDateString() != null
 						&& predicateSpotData.getParkedDateString().toLowerCase().contains(searchKey)) {
@@ -994,7 +1105,7 @@ public class Admincontrol implements Initializable {
 	}
 
 	public void displayTotalCashEarned() {
-		String sql = "SELECT CASH_EARNED FROM CASHEARNED";
+		String sql = "SELECT SUM(CASH_EARNED)" + " FROM cashearned";
 
 		DatabaseConnection connectNow = new DatabaseConnection();
 		connect = connectNow.getConnection();
@@ -1004,7 +1115,7 @@ public class Admincontrol implements Initializable {
 			result = prepare.executeQuery();
 
 			while (result.next()) {
-				totalCashEarned.setText(result.getString("CASH_EARNED") + "đ");
+				totalCashEarned.setText(result.getString("SUM(CASH_EARNED)") + "đ");
 			}
 
 		} catch (Exception e) {
@@ -1032,7 +1143,7 @@ public class Admincontrol implements Initializable {
 	}
 
 	public void updateFee() {
-		
+
 		String sql = "UPDATE parkingfee SET HOURLY_FEE = " + feeInput.getText();
 
 		DatabaseConnection connectNow = new DatabaseConnection();
@@ -1082,19 +1193,99 @@ public class Admincontrol implements Initializable {
 		}
 
 	}
-	
+
 	public void filterInt(TextField input) {
 		input.textProperty().addListener(new ChangeListener<String>() {
-		    @Override
-		    public void changed(ObservableValue<? extends String> observable, String oldValue, 
-		        String newValue) {
-		        if (!newValue.matches("\\d*")) {
-		        	input.setText(newValue.replaceAll("[^\\d]", ""));
-		        }
-		    }
+			@Override
+			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+				if (!newValue.matches("\\d*")) {
+					input.setText(newValue.replaceAll("[^\\d]", ""));
+				}
+			}
 		});
 	}
+
+	public void displayFloorSpots() {
+		String getSpotCount = "SELECT "
+				+ "	sum(case when SPOT_TYPE = 'Car' and FLOOR_NUM = 'Floor 1' then 1 else 0 end) AS totalFloor1CarSpot,"
+				+ "	sum(case when SPOT_TYPE = 'Motorcycle' and FLOOR_NUM = 'Floor 1' then 1 else 0 end) AS totalFloor1MotorcycleSpot,"
+				+ "	sum(case when SPOT_TYPE = 'Electric' and FLOOR_NUM = 'Floor 1' then 1 else 0 end) AS totalFloor1ElectricSpot,"
+				+ "	sum(case when SPOT_TYPE = 'Car' and FLOOR_NUM = 'Floor 2' then 1 else 0 end) AS totalFloor2CarSpot, "
+				+ "	sum(case when SPOT_TYPE = 'Motorcycle' and FLOOR_NUM = 'Floor 2' then 1 else 0 end) AS totalFloor2MotorcycleSpot,"
+				+ "	sum(case when SPOT_TYPE = 'Electric' and FLOOR_NUM = 'Floor 2' then 1 else 0 end) AS totalFloor2ElectricSpot,"
+				+ "	sum(case when SPOT_TYPE = 'Car' and FLOOR_NUM = 'Floor 3' then 1 else 0 end) AS totalFloor3CarSpot, "
+				+ "	sum(case when SPOT_TYPE = 'Motorcycle' and FLOOR_NUM = 'Floor 3' then 1 else 0 end) AS totalFloor3MotorcycleSpot,"
+				+ "	sum(case when SPOT_TYPE = 'Electric' and FLOOR_NUM = 'Floor 3' then 1 else 0 end) AS totalFloor3ElectricSpot"
+				+ "	FROM parkingspot";
+
+		DatabaseConnection connectNow = new DatabaseConnection();
+		connect = connectNow.getConnection();
+
+		try {
+			prepare = connect.prepareStatement(getSpotCount);
+			result = prepare.executeQuery();
+
+			while (result.next()) {
+				floor1CarSpot.setText(result.getString("totalFloor1CarSpot"));
+				floor1ElectricSpot.setText(result.getString("totalFloor1ElectricSpot"));
+				floor1MotorcycleSpot.setText(result.getString("totalFloor1MotorcycleSpot"));
+				floor2CarSpot.setText(result.getString("totalFloor2CarSpot"));
+				floor2ElectricSpot.setText(result.getString("totalFloor2ElectricSpot"));
+				floor2MotorcycleSpot.setText(result.getString("totalFloor2MotorcycleSpot"));
+				floor3CarSpot.setText(result.getString("totalFloor3CarSpot"));
+				floor3ElectricSpot.setText(result.getString("totalFloor3ElectricSpot"));
+				floor3MotorcycleSpot.setText(result.getString("totalFloor3MotorcycleSpot"));
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void displayFloorFreeSpots() {
+		String getSpotCount = "SELECT "
+				+ "	sum(case when SPOT_TYPE = 'Car' and FLOOR_NUM = 'Floor 1' and TICKET_ID IS NULL then 1 else 0 end) AS totalFloor1CarSpot,"
+				+ "	sum(case when SPOT_TYPE = 'Motorcycle' and FLOOR_NUM = 'Floor 1' and TICKET_ID IS NULL then 1 else 0 end) AS totalFloor1MotorcycleSpot,"
+				+ "	sum(case when SPOT_TYPE = 'Electric' and FLOOR_NUM = 'Floor 1' and TICKET_ID IS NULL then 1 else 0 end) AS totalFloor1ElectricSpot,"
+				+ "	sum(case when SPOT_TYPE = 'Car' and FLOOR_NUM = 'Floor 2' and TICKET_ID IS NULL then 1 else 0 end) AS totalFloor2CarSpot, "
+				+ "	sum(case when SPOT_TYPE = 'Motorcycle' and FLOOR_NUM = 'Floor 2' and TICKET_ID IS NULL then 1 else 0 end) AS totalFloor2MotorcycleSpot,"
+				+ "	sum(case when SPOT_TYPE = 'Electric' and FLOOR_NUM = 'Floor 2' and TICKET_ID IS NULL then 1 else 0 end) AS totalFloor2ElectricSpot,"
+				+ "	sum(case when SPOT_TYPE = 'Car' and FLOOR_NUM = 'Floor 3' and TICKET_ID IS NULL then 1 else 0 end) AS totalFloor3CarSpot, "
+				+ "	sum(case when SPOT_TYPE = 'Motorcycle' and FLOOR_NUM = 'Floor 3' and TICKET_ID IS NULL then 1 else 0 end) AS totalFloor3MotorcycleSpot,"
+				+ "	sum(case when SPOT_TYPE = 'Electric' and FLOOR_NUM = 'Floor 3' and TICKET_ID IS NULL then 1 else 0 end) AS totalFloor3ElectricSpot"
+				+ "	FROM parkingspot";
+
+		DatabaseConnection connectNow = new DatabaseConnection();
+		connect = connectNow.getConnection();
+
+		try {
+			prepare = connect.prepareStatement(getSpotCount);
+			result = prepare.executeQuery();
+
+			while (result.next()) {
+				floor1CarSpot.setText(result.getString("totalFloor1CarSpot"));
+				floor1ElectricSpot.setText(result.getString("totalFloor1ElectricSpot"));
+				floor1MotorcycleSpot.setText(result.getString("totalFloor1MotorcycleSpot"));
+				floor2CarSpot.setText(result.getString("totalFloor2CarSpot"));
+				floor2ElectricSpot.setText(result.getString("totalFloor2ElectricSpot"));
+				floor2MotorcycleSpot.setText(result.getString("totalFloor2MotorcycleSpot"));
+				floor3CarSpot.setText(result.getString("totalFloor3CarSpot"));
+				floor3ElectricSpot.setText(result.getString("totalFloor3ElectricSpot"));
+				floor3MotorcycleSpot.setText(result.getString("totalFloor3MotorcycleSpot"));
+			}
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	
+	public void showNumsFreeSpot() {
+		if (showNumsFreeSpotBox.isSelected()) {
+			displayFloorFreeSpots();
+		} else {
+			displayFloorSpots();
+		}
+	}
 
 	@Override
 	public void initialize(URL url, ResourceBundle rb) {
@@ -1103,16 +1294,16 @@ public class Admincontrol implements Initializable {
 		displayTotalSpot();
 		displayTotalCashEarned();
 		displayHourlyFee();
-		
+
 		filterInt(feeInput);
 		filterInt(attendantIdInput);
 		filterInt(attendantPhoneInput);
 		filterInt(spotNumberInput);
 
-		
 		employeeShowListData();
 		spotShowListData();
 		spotTypeList();
 		floorList();
+		homeChart();
 	}
 }

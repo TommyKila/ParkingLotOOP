@@ -6,6 +6,7 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -181,19 +182,16 @@ public class Attendantcontrol implements Initializable {
 				String searchKey = newValue.toLowerCase();
 
 				if (predicateSpotData.getNumber().toString().contains(searchKey)) {
-					System.out.println(predicateSpotData.getNumber());
 					return true;
 				} else if (predicateSpotData.getTicketId() != null
 						&& predicateSpotData.getTicketId().toLowerCase().contains(searchKey)) {
 					return true;
 				} else if (predicateSpotData.getFloorNum().toLowerCase().contains(searchKey)) {
-					System.out.println(predicateSpotData.getFloorNum());
 					return true;
 				} else if (predicateSpotData.getLicenseNumber() != null
 						&& predicateSpotData.getLicenseNumber().toLowerCase().contains(searchKey)) {
 					return true;
 				} else if (predicateSpotData.getType().toLowerCase().contains(searchKey)) {
-					System.out.println(predicateSpotData.getType());
 					return true;
 				} else if (predicateSpotData.getParkedDateString() != null
 						&& predicateSpotData.getParkedDateString().toLowerCase().contains(searchKey)) {
@@ -226,19 +224,16 @@ public class Attendantcontrol implements Initializable {
 				String searchKey = newValue.toLowerCase();
 
 				if (predicateSpotData.getNumber().toString().contains(searchKey)) {
-					System.out.println(predicateSpotData.getNumber());
 					return true;
 				} else if (predicateSpotData.getTicketId() != null
 						&& predicateSpotData.getTicketId().toLowerCase().contains(searchKey)) {
 					return true;
 				} else if (predicateSpotData.getFloorNum().toLowerCase().contains(searchKey)) {
-					System.out.println(predicateSpotData.getFloorNum());
 					return true;
 				} else if (predicateSpotData.getLicenseNumber() != null
 						&& predicateSpotData.getLicenseNumber().toLowerCase().contains(searchKey)) {
 					return true;
 				} else if (predicateSpotData.getType().toLowerCase().contains(searchKey)) {
-					System.out.println(predicateSpotData.getType());
 					return true;
 				} else if (predicateSpotData.getParkedDateString() != null
 						&& predicateSpotData.getParkedDateString().toLowerCase().contains(searchKey)) {
@@ -542,12 +537,12 @@ public class Attendantcontrol implements Initializable {
 	public void getParkingFees() {
 
 		LocalDateTime now = LocalDateTime.now();
+		LocalDate dateNow = LocalDate.now();
+
 		String getParkedAt = "SELECT PARKED_AT FROM PARKINGSPOT WHERE VEH_LIS_NUM = '" + vehiclePlateExitInput.getText()
 				+ "'";
 
 		String getHourlyFee = "select HOURLY_FEE from parkingfee";
-
-		String getCashEarned = "SELECT CASH_EARNED FROM CASHEARNED";
 
 		try {
 			prepare = connect.prepareStatement(getParkedAt);
@@ -573,15 +568,11 @@ public class Attendantcontrol implements Initializable {
 					int fees = (int) Math.round(result.getInt("HOURLY_FEE") * timeParked);
 					totalFees.setText(fees + "đ");
 
-					prepare = connect.prepareStatement(getCashEarned);
-					result = prepare.executeQuery();
+					String updateTotalCash = "INSERT INTO CASHEARNED VALUES (" + fees + ", '"
+							+ dateNow.toString().replace("T", " ") + "')";
+					statement = connect.createStatement();
+					statement.executeUpdate(updateTotalCash);
 
-					while (result.next()) {
-						String updateTotalCash = "UPDATE CASHEARNED SET CASH_EARNED = "
-								+ (result.getInt("CASH_EARNED") + fees);
-						statement = connect.createStatement();
-						statement.executeUpdate(updateTotalCash);
-					}
 				}
 
 			}
@@ -644,5 +635,7 @@ public class Attendantcontrol implements Initializable {
 		displayAttendantName();
 		displaySpotCount();
 		vehicleTypeList();
+		spotEntranceSearch();
+		spotExitSearch();
 	}
 }

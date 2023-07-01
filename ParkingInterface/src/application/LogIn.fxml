@@ -48,7 +48,7 @@
             <Font name="System Bold" size="31.0" />
          </font>
       </Text>
-      <JFXButton fx:id="button" buttonType="RAISED" layoutX="614.0" layoutY="426.0" onAction="#userLogIn" prefHeight="40.0" prefWidth="294.0" style="-fx-background-color: #ef3991;" stylesheets="@application.css" text="Đăng nhập" textAlignment="CENTER" textFill="WHITE">
+      <JFXButton fx:id="button" buttonType="RAISED" layoutX="614.0" layoutY="426.0" onAction="#userLogIn" prefHeight="40.0" prefWidth="294.0" style="-fx-background-color: #ef3991;" stylesheets="@application.css" text="Log In" textAlignment="CENTER" textFill="WHITE">
          <font>
             <Font size="15.0" />
          </font>
@@ -56,7 +56,7 @@
             <Cursor fx:constant="HAND" />
          </cursor>
       </JFXButton>
-      <JFXButton fx:id="cancelButton" buttonType="RAISED" layoutX="614.0" layoutY="490.0" onAction="#cancelButtonClick" prefHeight="40.0" prefWidth="294.0" style="-fx-background-color: #ef3991;" stylesheets="@application.css" text="Hủy" textAlignment="CENTER" textFill="WHITE">
+      <JFXButton fx:id="cancelButton" buttonType="RAISED" layoutX="614.0" layoutY="490.0" onAction="#cancelButtonClick" prefHeight="40.0" prefWidth="294.0" style="-fx-background-color: #ef3991;" stylesheets="@application.css" text="Cancel" textAlignment="CENTER" textFill="WHITE">
          <font>
             <Font size="15.0" />
          </font>
