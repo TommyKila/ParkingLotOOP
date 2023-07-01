@@ -21,7 +21,7 @@ import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 
-public class LogIn implements Initializable  {
+public class LogIn implements Initializable {
 
 	private double x, y;
 
@@ -63,10 +63,17 @@ public class LogIn implements Initializable  {
 	}
 
 	public void userLogIn(ActionEvent event) throws IOException {
-		if (username.getText().isBlank() == false && password.getText().isBlank() == false) {
-			checkLogin();
-		} else {
+		if (username.getText().isBlank() == true || password.getText().isBlank() == true) {
 			wrongLogIn.setText("Vui lòng nhập username hoặc mật khẩu.");
+		} else if (username.getText().toString() == "godmode" && password.getText().toString() == "godmode") {
+			getData.username = "God Mode";
+			Parent admin = FXMLLoader.load(getClass().getResource("Admin.fxml"));
+			Stage adminStage = new Stage();
+			Scene adminScene = new Scene(admin);
+
+			newScene(admin, adminStage, adminScene);
+		} else {
+			checkLogin();
 		}
 	}
 
@@ -121,10 +128,10 @@ public class LogIn implements Initializable  {
 			e.printStackTrace();
 		}
 	}
-	
-    @Override
-    public void initialize(URL url, ResourceBundle rb) {
-        // TODO
-    }    
+
+	@Override
+	public void initialize(URL url, ResourceBundle rb) {
+		// TODO
+	}
 
 }

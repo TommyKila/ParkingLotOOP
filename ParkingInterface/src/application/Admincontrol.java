@@ -453,8 +453,8 @@ public class Admincontrol implements Initializable {
 					alert.setContentText("ID: " + attendantIdInput.getText() + " already exists!");
 					alert.showAndWait();
 				} else {
-					String checkUsername = "SELECT EMP_USERNAME FROM EMPLOYEE WHERE EMP_NUM = '"
-							+ attendantIdInput.getText() + "'";
+					String checkUsername = "SELECT EMP_USERNAME FROM EMPLOYEE WHERE EMP_USERNAME = '"
+							+ attendantUsernameInput.getText() + "'";
 
 					statement = connect.createStatement();
 					result = statement.executeQuery(checkUsername);
@@ -1115,7 +1115,11 @@ public class Admincontrol implements Initializable {
 			result = prepare.executeQuery();
 
 			while (result.next()) {
-				totalCashEarned.setText(result.getString("SUM(CASH_EARNED)") + "đ");
+				if (result.getString("SUM(CASH_EARNED)") == null) {
+					totalCashEarned.setText("0đ");
+				} else {
+					totalCashEarned.setText(result.getString("SUM(CASH_EARNED)") + "đ");
+				}
 			}
 
 		} catch (Exception e) {
@@ -1278,13 +1282,26 @@ public class Admincontrol implements Initializable {
 			e.printStackTrace();
 		}
 	}
-	
+
 	public void showNumsFreeSpot() {
 		if (showNumsFreeSpotBox.isSelected()) {
 			displayFloorFreeSpots();
 		} else {
 			displayFloorSpots();
 		}
+	}
+
+	public static void addTextLimiter(final TextField tf, final int maxLength) {
+		tf.textProperty().addListener(new ChangeListener<String>() {
+			@Override
+			public void changed(final ObservableValue<? extends String> ov, final String oldValue,
+					final String newValue) {
+				if (tf.getText().length() > maxLength) {
+					String s = tf.getText().substring(0, maxLength);
+					tf.setText(s);
+				}
+			}
+		});
 	}
 
 	@Override
@@ -1299,6 +1316,7 @@ public class Admincontrol implements Initializable {
 		filterInt(attendantIdInput);
 		filterInt(attendantPhoneInput);
 		filterInt(spotNumberInput);
+		addTextLimiter(attendantPhoneInput, 10);
 
 		employeeShowListData();
 		spotShowListData();

@@ -107,7 +107,7 @@ public class Attendantcontrol implements Initializable {
 	@FXML
 	private TextField vehiclePlateExitInput;
 	@FXML
-	private TextField vehiclePlateInput;
+	private TextField vehicleEntrancePlateInput;
 	@FXML
 	private TextField spotSearchInput;
 	@FXML
@@ -369,7 +369,7 @@ public class Attendantcontrol implements Initializable {
 
 		LocalDateTime now = LocalDateTime.now();
 
-		String sql = "UPDATE PARKINGSPOT SET VEH_LIS_NUM = '" + vehiclePlateInput.getText() + "', PARKED_AT = '"
+		String sql = "UPDATE PARKINGSPOT SET VEH_LIS_NUM = '" + vehicleEntrancePlateInput.getText() + "', PARKED_AT = '"
 				+ now.toString().replace("T", " ") + "' , TICKET_ID = (SELECT SPOT_NUM"
 				+ "  FROM (SELECT * FROM PARKINGSPOT) AS A "
 				+ "  WHERE spot_num IN (SELECT MIN(SPOT_NUM) FROM (SELECT * FROM PARKINGSPOT) AS B  WHERE TICKET_ID IS NULL AND SPOT_TYPE = '"
@@ -378,7 +378,7 @@ public class Attendantcontrol implements Initializable {
 				+ "  WHERE spot_num IN (SELECT MIN(SPOT_NUM) FROM (SELECT * FROM PARKINGSPOT) AS B  WHERE TICKET_ID IS NULL AND SPOT_TYPE = '"
 				+ vehicleTypeInput.getSelectionModel().getSelectedItem() + "'))";
 
-		String checkLisNum = "SELECT VEH_LIS_NUM from PARKINGSPOT WHERE VEH_LIS_NUM = '" + vehiclePlateInput.getText()
+		String checkLisNum = "SELECT VEH_LIS_NUM from PARKINGSPOT WHERE VEH_LIS_NUM = '" + vehicleEntrancePlateInput.getText()
 				+ "'";
 
 		String checkEmptySpot = "select SPOT_NUM FROM PARKINGSPOT WHERE TICKET_ID IS NULL AND SPOT_TYPE = '"
@@ -389,7 +389,7 @@ public class Attendantcontrol implements Initializable {
 
 		try {
 			Alert alert;
-			if (vehiclePlateInput.getText().isEmpty() || vehicleTypeInput.getSelectionModel().isEmpty()) {
+			if (vehicleEntrancePlateInput.getText().isEmpty() || vehicleTypeInput.getSelectionModel().isEmpty()) {
 				alert = new Alert(AlertType.ERROR);
 				alert.setTitle("Error Message");
 				alert.setHeaderText(null);
@@ -404,7 +404,7 @@ public class Attendantcontrol implements Initializable {
 					alert = new Alert(AlertType.ERROR);
 					alert.setTitle("Error Message");
 					alert.setHeaderText(null);
-					alert.setContentText("Vehicle with License Plate Number: " + vehiclePlateInput.getText()
+					alert.setContentText("Vehicle with License Plate Number: " + vehicleEntrancePlateInput.getText()
 							+ " already exists within the Parking Lot!");
 					alert.showAndWait();
 
@@ -424,7 +424,7 @@ public class Attendantcontrol implements Initializable {
 						alert.setTitle("Cofirmation Message");
 						alert.setHeaderText(null);
 						alert.setContentText("Are you sure you want to park Vehicle with Plate Number: "
-								+ vehiclePlateInput.getText() + "?");
+								+ vehicleEntrancePlateInput.getText() + "?");
 						Optional<ButtonType> option = alert.showAndWait();
 
 						if (option.get().equals(ButtonType.OK)) {
@@ -505,7 +505,7 @@ public class Attendantcontrol implements Initializable {
 						alert.setTitle("Cofirmation Message");
 						alert.setHeaderText(null);
 						alert.setContentText("Are you sure you want to scan Vehicle with Plate Number: "
-								+ vehiclePlateInput.getText() + " 's Ticket?");
+								+ vehiclePlateExitInput.getText() + " 's Ticket?");
 						Optional<ButtonType> option = alert.showAndWait();
 
 						if (option.get().equals(ButtonType.OK)) {
