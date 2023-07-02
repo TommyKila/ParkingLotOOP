@@ -64,14 +64,7 @@ public class LogIn implements Initializable {
 
 	public void userLogIn(ActionEvent event) throws IOException {
 		if (username.getText().isBlank() == true || password.getText().isBlank() == true) {
-			wrongLogIn.setText("Vui lòng nhập username hoặc mật khẩu.");
-		} else if (username.getText().toString() == "godmode" && password.getText().toString() == "godmode") {
-			getData.username = "God Mode";
-			Parent admin = FXMLLoader.load(getClass().getResource("Admin.fxml"));
-			Stage adminStage = new Stage();
-			Scene adminScene = new Scene(admin);
-
-			newScene(admin, adminStage, adminScene);
+			wrongLogIn.setText("Please enter your username or password.");
 		} else {
 			checkLogin();
 		}
@@ -120,7 +113,7 @@ public class LogIn implements Initializable {
 					}
 
 				} else {
-					wrongLogIn.setText("Sai username hoặc mật khẩu");
+					wrongLogIn.setText("Invalid username or password!");
 				}
 			}
 
